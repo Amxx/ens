@@ -95,7 +95,7 @@ contract ReverseRegistrar {
      * @dev An optimised function to compute the sha3 of the lower-case
      *      hexadecimal representation of an Ethereum address.
      * @param addr The address to hash
-     * @return The SHA3 hash of the lower-case hexadecimal encoding of the
+     * @return ret The SHA3 hash of the lower-case hexadecimal encoding of the
      *         input address.
      */
     function sha3HexAddress(address addr) private pure returns (bytes32 ret) {
