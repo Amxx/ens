@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity ^0.6.0;
 
 
 /*
@@ -75,7 +75,7 @@ contract HashRegistrar is Registrar {
      *
      * @param _hash The hash to start an auction on
      */
-    function startAuction(bytes32 _hash) external {
+    function startAuction(bytes32 _hash) external override {
         _startAuction(_hash);
     }
 
@@ -90,7 +90,7 @@ contract HashRegistrar is Registrar {
      *
      * @param _hashes An array of hashes, at least one of which you presumably want to bid on
      */
-    function startAuctions(bytes32[] calldata _hashes) external {
+    function startAuctions(bytes32[] calldata _hashes) external override {
         _startAuctions(_hashes);
     }
 
@@ -107,7 +107,7 @@ contract HashRegistrar is Registrar {
      *
      * @param sealedBid A sealedBid, created by the shaBid function
      */
-    function newBid(bytes32 sealedBid) external payable {
+    function newBid(bytes32 sealedBid) external override payable {
         _newBid(sealedBid);
     }
 
@@ -120,7 +120,7 @@ contract HashRegistrar is Registrar {
      * @param hashes A list of hashes to start auctions on.
      * @param sealedBid A sealed bid for one of the auctions.
      */
-    function startAuctionsAndBid(bytes32[] calldata hashes, bytes32 sealedBid) external payable {
+    function startAuctionsAndBid(bytes32[] calldata hashes, bytes32 sealedBid) external override payable {
         _startAuctions(hashes);
         _newBid(sealedBid);
     }
@@ -132,7 +132,7 @@ contract HashRegistrar is Registrar {
      * @param _value The bid amount in the sealedBid
      * @param _salt The sale in the sealedBid
      */
-    function unsealBid(bytes32 _hash, uint _value, bytes32 _salt) external {
+    function unsealBid(bytes32 _hash, uint _value, bytes32 _salt) external override {
         bytes32 seal = shaBid(_hash, msg.sender, _value, _salt);
         Deed bid = sealedBids[msg.sender][seal];
         require(address(bid) != address(0x0));
@@ -185,9 +185,9 @@ contract HashRegistrar is Registrar {
      *
      * @param seal The value returned by the shaBid function
      */
-    function cancelBid(address bidder, bytes32 seal) external {
+    function cancelBid(address bidder, bytes32 seal) external override {
         Deed bid = sealedBids[bidder][seal];
-        
+
         // If a sole bidder does not `unsealBid` in time, they have a few more days
         // where they can call `startAuction` (again) and then `unsealBid` during
         // the revealPeriod to get back their bid value.
@@ -208,9 +208,9 @@ contract HashRegistrar is Registrar {
      *
      * @param _hash The hash of the name the auction is for
      */
-    function finalizeAuction(bytes32 _hash) external onlyOwner(_hash) {
+    function finalizeAuction(bytes32 _hash) external override onlyOwner(_hash) {
         Entry storage h = _entries[_hash];
-        
+
         // Handles the case when there's only a single bidder (h.value is zero)
         h.value = max(h.value, minPrice);
         h.deed.setBalance(h.value, true);
@@ -225,7 +225,7 @@ contract HashRegistrar is Registrar {
      * @param _hash The node to transfer
      * @param newOwner The address to transfer ownership to
      */
-    function transfer(bytes32 _hash, address payable newOwner) external onlyOwner(_hash) {
+    function transfer(bytes32 _hash, address payable newOwner) external override onlyOwner(_hash) {
         require(newOwner != address(0x0));
 
         Entry storage h = _entries[_hash];
@@ -239,7 +239,7 @@ contract HashRegistrar is Registrar {
      *
      * @param _hash The node to release
      */
-    function releaseDeed(bytes32 _hash) external onlyOwner(_hash) {
+    function releaseDeed(bytes32 _hash) external override onlyOwner(_hash) {
         Entry storage h = _entries[_hash];
         Deed deedContract = h.deed;
 
@@ -251,20 +251,20 @@ contract HashRegistrar is Registrar {
 
         _tryEraseSingleNode(_hash);
         deedContract.closeDeed(1000);
-        emit HashReleased(_hash, h.value);        
+        emit HashReleased(_hash, h.value);
     }
 
     /**
      * @dev Submit a name 6 characters long or less. If it has been registered,
-     *      the submitter will earn 50% of the deed value. 
-     * 
-     * We are purposefully handicapping the simplified registrar as a way 
+     *      the submitter will earn 50% of the deed value.
+     *
+     * We are purposefully handicapping the simplified registrar as a way
      * to force it into being restructured in a few years.
      *
      * @param unhashedName An invalid name to search for in the registry.
      */
     function invalidateName(string calldata unhashedName)
-        external
+        external override
         inState(keccak256(abi.encode(unhashedName)), Mode.Owned)
     {
         require(strlen(unhashedName) <= 6);
@@ -296,11 +296,11 @@ contract HashRegistrar is Registrar {
      *      the owner and resolver fields on 'foo.bar.eth' and 'bar.eth' will all be cleared.
      *
      * @param labels A series of label hashes identifying the name to zero out, rooted at the
-     *        registrar's root. Must contain at least one element. For instance, to zero 
+     *        registrar's root. Must contain at least one element. For instance, to zero
      *        'foo.bar.eth' on a registrar that owns '.eth', pass an array containing
      *        [keccak256('foo'), keccak256('bar')].
      */
-    function eraseNode(bytes32[] calldata labels) external {
+    function eraseNode(bytes32[] calldata labels) external override {
         require(labels.length != 0);
         require(state(labels[labels.length - 1]) != Mode.Owned);
 
@@ -314,7 +314,7 @@ contract HashRegistrar is Registrar {
      *
      * @param _hash The name hash to transfer.
      */
-    function transferRegistrars(bytes32 _hash) external onlyOwner(_hash) {
+    function transferRegistrars(bytes32 _hash) external override onlyOwner(_hash) {
         address registrar = ens.owner(rootNode);
         require(registrar != address(this));
 
@@ -340,11 +340,11 @@ contract HashRegistrar is Registrar {
      * @param deed The Deed object for the name being transferred in.
      * @param registrationDate The date at which the name was originally registered.
      */
-    function acceptRegistrarTransfer(bytes32 hash, Deed deed, uint registrationDate) external {
+    function acceptRegistrarTransfer(bytes32 hash, Deed deed, uint registrationDate) external override {
         hash; deed; registrationDate; // Don't warn about unused variables
     }
 
-    function entries(bytes32 _hash) external view returns (Mode, address, uint, uint, uint) {
+    function entries(bytes32 _hash) external view override returns (Mode, address, uint, uint, uint) {
         Entry storage h = _entries[_hash];
         return (state(_hash), address(h.deed), h.registrationDate, h.value, h.highestBid);
     }
@@ -355,7 +355,7 @@ contract HashRegistrar is Registrar {
     //   Reveal -> Owned
     //   Reveal -> Open (if nobody bid)
     //   Owned -> Open (releaseDeed or invalidateName)
-    function state(bytes32 _hash) public view returns (Mode) {
+    function state(bytes32 _hash) public view override returns (Mode) {
         Entry storage entry = _entries[_hash];
 
         if (!isAllowed(_hash, now)) {

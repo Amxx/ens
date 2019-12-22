@@ -1,9 +1,9 @@
-pragma solidity ^0.5.0;
+pragma solidity ^0.6.0;
 
 import "./ENS.sol";
 
-contract Resolver {
-    function setName(bytes32 node, string memory name) public;
+interface Resolver {
+    function setName(bytes32 node, string calldata name) external;
 }
 
 contract ReverseRegistrar {
@@ -28,7 +28,7 @@ contract ReverseRegistrar {
             oldRegistrar.claim(msg.sender);
         }
     }
-    
+
     /**
      * @dev Transfers ownership of the reverse ENS record associated with the
      *      calling account.

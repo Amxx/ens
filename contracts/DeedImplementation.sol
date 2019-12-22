@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity ^0.6.0;
 
 import "./Deed.sol";
 
@@ -40,18 +40,18 @@ contract DeedImplementation is Deed {
         _value = msg.value;
     }
 
-    function setOwner(address payable newOwner) external onlyRegistrar {
+    function setOwner(address payable newOwner) external override onlyRegistrar {
         require(newOwner != address(0x0));
         _previousOwner = _owner;  // This allows contracts to check who sent them the ownership
         _owner = newOwner;
         emit OwnerChanged(newOwner);
     }
 
-    function setRegistrar(address newRegistrar) external onlyRegistrar {
+    function setRegistrar(address newRegistrar) external override onlyRegistrar {
         _registrar = newRegistrar;
     }
 
-    function setBalance(uint newValue, bool throwOnFailure) external onlyRegistrar onlyActive {
+    function setBalance(uint newValue, bool throwOnFailure) external override onlyRegistrar onlyActive {
         // Check if it has enough balance to set the value
         require(_value >= newValue);
         _value = newValue;
@@ -64,7 +64,7 @@ contract DeedImplementation is Deed {
      *
      * @param refundRatio The amount*1/1000 to refund
      */
-    function closeDeed(uint refundRatio) external onlyRegistrar onlyActive {
+    function closeDeed(uint refundRatio) external override onlyRegistrar onlyActive {
         active = false;
         require(burn.send(((1000 - refundRatio) * address(this).balance)/1000));
         emit DeedClosed();
@@ -74,23 +74,23 @@ contract DeedImplementation is Deed {
     /**
      * @dev Close a deed and refund a specified fraction of the bid value
      */
-    function destroyDeed() external {
+    function destroyDeed() external override {
         _destroyDeed();
     }
 
-    function owner() external view returns (address) {
+    function owner() external view override returns (address) {
         return _owner;
     }
 
-    function previousOwner() external view returns (address) {
+    function previousOwner() external view override returns (address) {
         return _previousOwner;
     }
 
-    function value() external view returns (uint) {
+    function value() external view override returns (uint) {
         return _value;
     }
 
-    function creationDate() external view returns (uint) {
+    function creationDate() external view override returns (uint) {
         _creationDate;
     }
 
